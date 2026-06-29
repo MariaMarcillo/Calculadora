@@ -7,7 +7,6 @@ from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.graphics import Color, Rectangle, RoundedRectangle
 from kivy.animation import Animation
-from kivy.clock import Clock
 
 # ==========================================
 # 1. LÓGICA DE LAS OPERACIONES MATEMÁTICAS
@@ -81,7 +80,6 @@ class ControladorCalculadora:
             elif self.op == '/':
                 resultado = OperacionDividir.ejecutar(val1, val2)
 
-            # Formatear para quitar el .0 si es un número entero entero
             if isinstance(resultado, float) and resultado.is_integer():
                 resultado = int(resultado)
 
@@ -98,25 +96,26 @@ class ControladorCalculadora:
 
 
 # ==========================================
-# 3. INTERFAZ GRÁFICA (KIVY)
+# 3. INTERFAZ GRÁFICA CON ESTILO PREMIUM
 # ==========================================
 class PantallaInicio(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         
+        # Fondo premium oscuro moderno
         with self.canvas.before:
-            Color(1, 0.92, 0.94, 1)
+            Color(0.07, 0.07, 0.08, 1) 
             self.rect = Rectangle(pos=self.pos, size=self.size)
         self.bind(pos=self.actualizar_fondo, size=self.actualizar_fondo)
         
         self.logo = Label(
             text="Calculadora\ndel Yavirac",
-            font_size=28,  
-            font_name="Georgia",
-            color=(0.85, 0.35, 0.45, 1),
+            font_size=32,  
+            font_name="Roboto", # Asegura compatibilidad sin archivos externos
+            color=(0.95, 0.45, 0.55, 1), 
             bold=True,
             halign='center',
-            line_height=1.2
+            line_height=1.3
         )
         self.add_widget(self.logo)
         self.on_enter = self.iniciar_animacion
@@ -126,33 +125,33 @@ class PantallaInicio(Screen):
         self.rect.size = self.size
 
     def iniciar_animacion(self):
-        anim = Animation(font_size=36, duration=0.6) + Animation(font_size=26, duration=0.6)
-        anim.repeat = True
+        # Transición fluida corregida para Android
+        anim = Animation(font_size=38, duration=0.8) + Animation(font_size=32, duration=0.8)
+        anim.bind(on_complete=self.cambiar_a_calculadora)
         anim.start(self.logo)
-        
-        Clock.schedule_once(self.cambiar_a_calculadora, 2.5)
 
-    def cambiar_a_calculadora(self, dt):
+    def cambiar_a_calculadora(self, *args):
         self.manager.current = 'calculadora'
 
 
 class BotonLindo(Button):
-    def __init__(self, texto, color_fondo, **kwargs):
+    def __init__(self, texto, color_fondo, color_texto=(1, 1, 1, 1), **kwargs):
         super().__init__(**kwargs)
         self.text = texto
         self.background_normal = ''
         self.background_down = ''
         self.background_color = (0, 0, 0, 0) 
-        self.font_size = 22 
-        self.font_name = "Georgia"
+        self.font_size = 26 
+        self.font_name = "Roboto" 
         self.bold = True
-        self.color = (1, 1, 1, 1)
+        self.color = color_texto
         
         self.color_base = color_fondo
         
         with self.canvas.before:
             self.color_canvas = Color(*self.color_base)
-            self.bg_rect = RoundedRectangle(pos=self.pos, size=self.size, radius=[15])
+            # Botones circulares estilo moderno de celular (iOS/Android Premium)
+            self.bg_rect = RoundedRectangle(pos=self.pos, size=self.size, radius=[30])
             
         self.bind(pos=self.actualizar_geometria, size=self.actualizar_geometria)
 
@@ -162,7 +161,7 @@ class BotonLindo(Button):
 
     def on_state(self, instance, value):
         if value == 'down':
-            self.color_canvas.rgba = (self.color_base[0]*0.8, self.color_base[1]*0.8, self.color_base[2]*0.8, 1)
+            self.color_canvas.rgba = (self.color_base[0]*0.7, self.color_base[1]*0.7, self.color_base[2]*0.7, 1)
         else:
             self.color_canvas.rgba = self.color_base
 
@@ -171,54 +170,63 @@ class Calculadora(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.orientation = 'vertical'
-        self.padding = 8
-        self.spacing = 6
+        self.padding = 16
+        self.spacing = 12
         
         self.controlador = ControladorCalculadora()
         
         with self.canvas.before:
-            Color(1, 0.94, 0.96, 1)
+            Color(0.07, 0.07, 0.08, 1)
             self.rect = Rectangle(pos=self.pos, size=self.size)
         self.bind(pos=self.actualizar_fondo, size=self.actualizar_fondo)
 
+        # Pantalla flotante sin bordes visibles
         self.pantalla = TextInput(
             text='0',
-            font_size=36, 
-            font_name="Georgia",
+            font_size=54, 
+            font_name="Roboto", 
             halign='right',
             readonly=True,
-            size_hint_y=0.15, 
-            background_color=(1, 1, 1, 1),
-            foreground_color=(0.85, 0.35, 0.45, 1)
+            size_hint_y=0.28, 
+            background_color=(0.07, 0.07, 0.08, 1), 
+            foreground_color=(1, 1, 1, 1), 
+            multiline=False,
+            padding=[10, 40, 10, 10]
         )
         self.add_widget(self.pantalla)
 
-        rejilla = GridLayout(cols=4, spacing=4)
+        rejilla = GridLayout(cols=4, spacing=12)
         
+        color_num = (0.21, 0.21, 0.23, 1)
+        color_op = (0.85, 0.35, 0.45, 1)
+        color_c = (0.65, 0.65, 0.68, 1)
+        texto_oscuro = (0.07, 0.07, 0.08, 1)
+        texto_blanco = (1, 1, 1, 1)
+
         botones = [
-            ('7', (1, 0.72, 0.77, 1), 'num', '7'),
-            ('8', (1, 0.72, 0.77, 1), 'num', '8'),
-            ('9', (1, 0.72, 0.77, 1), 'num', '9'),
-            ('+', (0.9, 0.45, 0.55, 1), 'op', '+'),
+            ('7', color_num, 'num', '7', texto_blanco),
+            ('8', color_num, 'num', '8', texto_blanco),
+            ('9', color_num, 'num', '9', texto_blanco),
+            ('+', color_op, 'op', '+', texto_blanco),
             
-            ('4', (1, 0.72, 0.77, 1), 'num', '4'),
-            ('5', (1, 0.72, 0.77, 1), 'num', '5'),
-            ('6', (1, 0.72, 0.77, 1), 'num', '6'),
-            ('-', (0.9, 0.45, 0.55, 1), 'op', '-'),
+            ('4', color_num, 'num', '4', texto_blanco),
+            ('5', color_num, 'num', '5', texto_blanco),
+            ('6', color_num, 'num', '6', texto_blanco),
+            ('-', color_op, 'op', '-', texto_blanco),
             
-            ('1', (1, 0.72, 0.77, 1), 'num', '1'),
-            ('2', (1, 0.72, 0.77, 1), 'num', '2'),
-            ('3', (1, 0.72, 0.77, 1), 'num', '3'),
-            ('x', (0.9, 0.45, 0.55, 1), 'op', '*'),
+            ('1', color_num, 'num', '1', texto_blanco),
+            ('2', color_num, 'num', '2', texto_blanco),
+            ('3', color_num, 'num', '3', texto_blanco),
+            ('x', color_op, 'op', '*', texto_blanco),
             
-            ('C', (0.8, 0.35, 0.4, 1), 'c', 'C'),
-            ('0', (1, 0.72, 0.77, 1), 'num', '0'),
-            ('=', (0.85, 0.35, 0.45, 1), 'igual', '='),
-            ('/', (0.9, 0.45, 0.55, 1), 'op', '/')
+            ('C', color_c, 'c', 'C', texto_oscuro),
+            ('0', color_num, 'num', '0', texto_blanco),
+            ('=', color_op, 'igual', '=', texto_blanco),
+            ('/', color_op, 'op', '/', texto_blanco)
         ]
 
-        for texto, color, tipo, valor_logico in botones:
-            btn = BotonLindo(texto=texto, color_fondo=color)
+        for texto, color, tipo, valor_logico, col_txt in botones:
+            btn = BotonLindo(texto=texto, color_fondo=color, color_texto=col_txt)
             
             if tipo == 'num':
                 btn.bind(on_press=lambda instance, v=valor_logico: self.pantalla_num(v))
